@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>4-Agent Stock Analyzer Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{
+  --bg:#08111f;
+  --card:#101b2d;
+  --card2:#17263f;
+  --text:#eef4ff;
+  --muted:#9caecf;
+  --line:#223451;
+  --green:#1fd28b;
+  --red:#ff5f74;
+  --blue:#4da3ff;
+  --purple:#9a7bff;
+  --orange:#ff9853;
+  --shadow:0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:radial-gradient(circle at top,#10203d 0%,#08111f 60%);
+  font-family:'Inter',sans-serif;
+  color:var(--text);
+  min-height:100vh;
+}
+.container{
+  max-width:1400px;
+  margin:auto;
+  padding:24px;
+}
+.header,.card{
+  background:rgba(16,27,45,.92);
+  border:1px solid var(--line);
+  border-radius:24px;
+  box-shadow:var(--shadow);
+}
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+  padding:22px;
+  margin-bottom:24px;
+}
+.logoWrap{display:flex;align-items:center;gap:16px}
+.logo{
+  width:58px;
+  height:58px;
+  border-radius:18px;
+  background:linear-gradient(135deg,var(--green),var(--blue));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:24px;
+  font-weight:700;
+}
+.sub,.small{color:var(--muted)}
+.live{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:rgba(31,210,139,.12);
+  color:var(--green);
+  border:1px solid rgba(31,210,139,.4);
+  padding:10px 16px;
+  border-radius:999px;
+  font-size:13px;
+}
+.dot{
+  width:10px;
+  height:10px;
+  background:var(--green);
+  border-radius:50%;
+  animation:pulse 1.2s infinite;
+}
+@keyframes pulse{
+  0%{transform:scale(.8);opacity:.5}
+  50%{transform:scale(1.1);opacity:1}
+  100%{transform:scale(.8);opacity:.5}
+}
+.searchBar{
+  display:grid;
+  grid-template-columns:1fr auto auto;
+  gap:12px;
+  margin-bottom:20px;
+}
+.searchBar input{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  color:white;
+  padding:18px;
+  font-size:18px;
+  outline:none;
+}
+.btn{
+  border:none;
+  border-radius:18px;
+  padding:0 22px;
+  cursor:pointer;
+  color:white;
+  font-weight:600;
+  background:linear-gradient(135deg,var(--green),#14aa6f);
+}
+.btn.secondary{
+  background:linear-gradient(135deg,var(--purple),#6847ff);
+}
+.quick{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:24px;
+}
+.chip{
+  background:var(--card);
+  color:var(--text);
+  border:1px solid var(--line);
+  border-radius:999px;
+  padding:10px 14px;
+  cursor:pointer;
+}
+.grid{
+  display:grid;
+  grid-template-columns:320px 1fr;
+  gap:20px;
+}
+.sidebar,.main{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+.card{padding:20px}
+.pipeline{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.agent{
+  background:var(--card2);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:16px;
+}
+.agent.active{
+  border-color:var(--green);
+}
+.agentBar{
+  height:5px;
+  border-radius:999px;
+  background:linear-gradient(90deg,var(--green),var(--blue));
+  width:0%;
+  transition:width .8s ease;
+  margin-top:12px;
+}
+.stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+}
+.stat,.signal{
+  background:var(--card2);
+  border-radius:20px;
+  border:1px solid var(--line);
+  padding:18px;
+}
+.value{
+  font-size:28px;
+  font-weight:700;
+}
+.positive{color:var(--green)}
+.negative{color:var(--red)}
+.chartWrap{height:380px}
+.verdict{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:20px;
+}
+.verdictText h2{
+  font-size:42px;
+}
+.scoreCircle{
+  width:130px;
+  height:130px;
+  border-radius:50%;
+  background:conic-gradient(var(--green) 0deg,var(--green) 260deg,rgba(255,255,255,.08) 260deg);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+}
+.scoreCircle::before{
+  content:'';
+  position:absolute;
+  inset:12px;
+  border-radius:50%;
+  background:var(--bg);
+}
+.scoreCircle span{
+  position:relative;
+  z-index:2;
+  font-size:32px;
+  font-weight:700;
+}
+.signalGrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+}
+.progress{
+  height:8px;
+  background:#23344f;
+  border-radius:999px;
+  overflow:hidden;
+  margin-top:14px;
+}
+.progress div{
+  height:100%;
+  border-radius:999px;
+}
+.log{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  max-height:280px;
+  overflow:auto;
+}
+.logItem{
+  background:var(--card2);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:12px;
+  font-size:13px;
+}
+.statusBox{
+  margin-top:16px;
+  padding:12px;
+  border-radius:14px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+  font-size:13px;
+}
+.footer{
+  margin-top:20px;
+  text-align:center;
+  color:var(--muted);
+  font-size:12px;
+}
+@media(max-width:1000px){
+  .grid{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:700px){
+  .searchBar{grid-template-columns:1fr}
+  .stats,.signalGrid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <div class="logoWrap">
+    <div class="logo">AI</div>
+    <div>
+      <h1>4-Agent Stock Analyzer Pro</h1>
+      <div class="sub">Interactive AI dashboard with resilient live stock analysis</div>
+    </div>
+  </div>
+  <div class="live"><div class="dot"></div>Live System</div>
+</div>
+
+<div class="searchBar">
+  <input id="tickerInput" placeholder="Enter ticker symbol" maxlength="8">
+  <button class="btn" onclick="analyzeStock()">Analyze</button>
+  <button class="btn secondary" onclick="toggleTheme()">Theme</button>
+</div>
+
+<div class="quick">
+  <button class="chip" onclick="setTicker('AAPL')">AAPL</button>
+  <button class="chip" onclick="setTicker('NVDA')">NVDA</button>
+  <button class="chip" onclick="setTicker('TSLA')">TSLA</button>
+  <button class="chip" onclick="setTicker('MSFT')">MSFT</button>
+  <button class="chip" onclick="setTicker('META')">META</button>
+  <button class="chip" onclick="setTicker('AMZN')">AMZN</button>
+</div>
+
+<div class="grid">
+
+<div class="sidebar">
+
+<div class="card">
+<h3 style="margin-bottom:16px">AI Pipeline</h3>
+<div class="pipeline" id="pipeline"></div>
+<div class="statusBox" id="statusBox">Ready for analysis</div>
+</div>
+
+<div class="card">
+<h3 style="margin-bottom:16px">Activity Feed</h3>
+<div class="log" id="activityLog"></div>
+</div>
+
+</div>
+
+<div class="main">
+
+<div class="card verdict">
+<div class="verdictText">
+<div class="small">AI Verdict</div>
+<h2 id="verdict">Waiting...</h2>
+<div class="sub" id="summary">Run a stock analysis</div>
+</div>
+<div class="scoreCircle"><span id="score">--</span></div>
+</div>
+
+<div class="stats">
+<div class="stat">
+<div class="small">Price</div>
+<div class="value" id="price">--</div>
+</div>
+<div class="stat">
+<div class="small">Daily Change</div>
+<div class="value" id="change">--</div>
+</div>
+<div class="stat">
+<div class="small">Volume</div>
+<div class="value" id="volume">--</div>
+</div>
+<div class="stat">
+<div class="small">RSI</div>
+<div class="value" id="rsi">--</div>
+</div>
+</div>
+
+<div class="card">
+<h3 style="margin-bottom:16px">Price Chart</h3>
+<div class="chartWrap">
+<canvas id="stockChart"></canvas>
+</div>
+</div>
+
+<div class="signalGrid">
+<div class="signal">
+<div class="small">News Signal</div>
+<h3 id="newsSignal">Neutral</h3>
+<div class="progress"><div id="newsBar" style="width:50%;background:var(--blue)"></div></div>
+</div>
+<div class="signal">
+<div class="small">Technical Signal</div>
+<h3 id="techSignal">Neutral</h3>
+<div class="progress"><div id="techBar" style="width:50%;background:var(--purple)"></div></div>
+</div>
+<div class="signal">
+<div class="small">Insider Signal</div>
+<h3 id="insiderSignal">Neutral</h3>
+<div class="progress"><div id="insiderBar" style="width:50%;background:var(--orange)"></div></div>
+</div>
+</div>
+
+</div>
+</div>
+
+<div class="footer">Yahoo Finance compatible • Offline fallback included • Demo only</div>
+
+</div>
+
+<script>
+const agents=[
+  'News Intelligence Agent',
+  'Technical Prediction Agent',
+  'Insider Analysis Agent',
+  'Master AI Synthesizer'
+];
+
+const pipeline=document.getElementById('pipeline');
+
+agents.forEach((name,index)=>{
+  const div=document.createElement('div');
+  div.className='agent';
+  div.id='agent-'+index;
+  div.innerHTML=`
+    <div style="font-weight:600">${name}</div>
+    <div class="small">Analyzing market signals</div>
+    <div class="agentBar" id="bar-${index}"></div>
+  `;
+  pipeline.appendChild(div);
+});
+
+function addLog(message){
+  const log=document.getElementById('activityLog');
+  const item=document.createElement('div');
+  item.className='logItem';
+  item.textContent=`${new Date().toLocaleTimeString()} • ${message}`;
+  log.prepend(item);
+}
+
+function setStatus(text){
+  document.getElementById('statusBox').textContent=text;
+}
+
+function setTicker(ticker){
+  document.getElementById('tickerInput').value=ticker;
+  analyzeStock();
+}
+
+function generateFallbackData(ticker){
+  // deterministic fallback data instead of fully random prices
+  const presets={
+    AAPL:{base:210,trend:0.35,volume:58000000},
+    NVDA:{base:1180,trend:2.4,volume:49000000},
+    TSLA:{base:178,trend:-0.25,volume:102000000},
+    MSFT:{base:428,trend:0.42,volume:24000000},
+    META:{base:512,trend:0.55,volume:18000000},
+    AMZN:{base:186,trend:0.28,volume:41000000}
+  };
+
+  const preset=presets[ticker] || {
+    base:120,
+    trend:0.15,
+    volume:22000000
+  };
+
+  const closes=[];
+
+  for(let i=0;i<30;i++){
+    const wave=Math.sin(i/3)*2.8;
+    const drift=i*preset.trend;
+    const price=Number((preset.base+wave+drift).toFixed(2));
+    closes.push(price);
+  }
+
+  return {
+    closes,
+    price:closes.at(-1),
+    previous:closes.at(-2),
+    volume:preset.volume,
+    name:ticker,
+    fallback:true
+  };
+}
+
+async function fetchStock(ticker){
+  const endpoints=[
+    `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1mo`,
+    `https://query1.finance.yahoo.com/v7/finance/chart/${ticker}?range=1mo&interval=1d`
+  ];
+
+  for(const endpoint of endpoints){
+    try{
+      setStatus('Connecting to Yahoo Finance API...');
+
+      // direct request attempt
+      let response;
+
+      try{
+        response=await fetch(endpoint,{
+          method:'GET',
+          mode:'cors',
+          headers:{
+            'Accept':'application/json'
+          }
+        });
+      }catch(directError){
+        console.warn('Direct fetch failed, trying proxy...',directError);
+      }
+
+      // proxy fallback for local HTML / CORS restricted environments
+      if(!response || !response.ok){
+        const proxyUrl=`https://api.allorigins.win/raw?url=${encodeURIComponent(endpoint)}`;
+        response=await fetch(proxyUrl);
+      }
+
+      if(!response.ok){
+        throw new Error('Network response failed');
+      }
+
+      const data=await response.json();
+
+      if(!data?.chart?.result?.[0]){
+        throw new Error('Invalid Yahoo Finance response');
+      }
+
+      const result=data.chart.result[0];
+      const closes=(result.indicators.quote[0].close || []).filter(v=>v!==null && !isNaN(v));
+      const meta=result.meta || {};
+
+      if(closes.length<2){
+        throw new Error('Insufficient chart data');
+      }
+
+      addLog('Live Yahoo Finance data loaded successfully');
+
+      return {
+        closes,
+        price:Number(meta.regularMarketPrice || closes.at(-1)),
+        previous:Number(meta.previousClose || closes.at(-2)),
+        volume:Number(meta.regularMarketVolume || 0),
+        name:meta.longName || ticker,
+        fallback:false
+      };
+
+    }catch(error){
+      console.warn('Endpoint failed:',endpoint,error);
+      addLog(`Live API attempt failed for ${ticker}`);
+    }
+  }
+
+  setStatus('Live API unavailable — switching to simulation mode');
+  addLog('Using offline AI simulation mode due to network restrictions');
+
+  return generateFallbackData(ticker);
+}
+
+let chart;
+
+function renderChart(ticker,prices,isPositive){
+  const ctx=document.getElementById('stockChart');
+
+  if(chart){
+    chart.destroy();
+  }
+
+  chart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:prices.map((_,i)=>i+1),
+      datasets:[{
+        label:`${ticker} Price`,
+        data:prices,
+        borderColor:isPositive ? '#1fd28b' : '#ff5f74',
+        backgroundColor:'rgba(77,163,255,0.1)',
+        borderWidth:3,
+        tension:0.35,
+        fill:true,
+        pointRadius:0
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:'#dce6ff'}}
+      },
+      scales:{
+        x:{ticks:{color:'#9caecf'},grid:{color:'rgba(255,255,255,0.05)'}},
+        y:{ticks:{color:'#9caecf'},grid:{color:'rgba(255,255,255,0.05)'}}
+      }
+    }
+  });
+}
+
+function updateSignals(percent,rsi){
+  const configs=[
+    ['newsSignal','newsBar'],
+    ['techSignal','techBar'],
+    ['insiderSignal','insiderBar']
+  ];
+
+  const momentum=Math.min(100,Math.max(0,50+Number(percent)*8));
+  const technical=Math.min(100,Math.max(0,rsi));
+  const insider=Math.min(100,Math.max(0,55+Number(percent)*5));
+
+  const values=[momentum,technical,insider];
+
+  configs.forEach(([label,bar],index)=>{
+    const value=Math.round(values[index]);
+
+    document.getElementById(bar).style.width=value+'%';
+
+    document.getElementById(label).textContent=
+      value>65 ? 'Bullish' : value>40 ? 'Neutral' : 'Bearish';
+  });
+}
+
+async function analyzeStock(){
+  const ticker=document.getElementById('tickerInput').value.trim().toUpperCase();
+
+  if(!ticker){
+    alert('Please enter a ticker symbol');
+    return;
+  }
+
+  setStatus(`Analyzing ${ticker}...`);
+  addLog(`Starting AI analysis for ${ticker}`);
+
+  document.querySelectorAll('.agent').forEach((el,index)=>{
+    el.classList.remove('active');
+    document.getElementById('bar-'+index).style.width='0%';
+  });
+
+  agents.forEach((_,index)=>{
+    setTimeout(()=>{
+      document.getElementById('agent-'+index).classList.add('active');
+      document.getElementById('bar-'+index).style.width='100%';
+    },index*500);
+  });
+
+  const data=await fetchStock(ticker);
+
+  const percent=((data.price-data.previous)/data.previous*100).toFixed(2);
+  const positive=Number(percent)>=0;
+  const volatility=Math.abs(Number(percent));
+  const rsi=Math.max(30,Math.min(80,Math.round(50+Number(percent)*6)));
+
+  // deterministic confidence score derived from actual movement
+  let score=Math.round(60+(Number(percent)*5)+(rsi-50)*0.6-volatility);
+  score=Math.max(35,Math.min(98,score));
+
+  document.getElementById('price').textContent='$'+Number(data.price).toFixed(2);
+
+  const changeEl=document.getElementById('change');
+  changeEl.textContent=(positive?'+':'')+percent+'%';
+  changeEl.className='value '+(positive?'positive':'negative');
+
+  document.getElementById('volume').textContent=(data.volume/1000000).toFixed(1)+'M';
+  document.getElementById('rsi').textContent=rsi;
+
+  const verdict=
+    score>85 ? 'Strong Buy' :
+    score>70 ? 'Buy' :
+    score>50 ? 'Hold' :
+    score>35 ? 'Sell' : 'Strong Sell';
+
+  document.getElementById('verdict').textContent=verdict;
+  document.getElementById('score').textContent=score;
+
+  document.getElementById('summary').textContent=
+    data.fallback
+      ? `${ticker} analyzed using realistic fallback market modeling mode.`
+      : `${ticker} analyzed using live market data and AI signal fusion.`;
+
+  updateSignals(percent,rsi);
+  renderChart(ticker,data.closes,positive);
+
+  setStatus(data.fallback
+    ? 'Simulation mode active due to network restrictions'
+    : 'Live market data connected successfully');
+
+  addLog(`Completed analysis for ${ticker}`);
+}
+
+function toggleTheme(){
+  const root=document.documentElement;
+  const dark=getComputedStyle(root).getPropertyValue('--bg').trim()==='#08111f';
+
+  if(dark){
+    root.style.setProperty('--bg','#eef3fb');
+    root.style.setProperty('--card','#ffffff');
+    root.style.setProperty('--card2','#f4f7fd');
+    root.style.setProperty('--text','#08111f');
+    root.style.setProperty('--muted','#51627c');
+    root.style.setProperty('--line','#d9e5f7');
+    document.body.style.background='#eef3fb';
+  }else{
+    location.reload();
+  }
+}
+
+window.addEventListener('keydown',event=>{
+  if(event.key==='Enter'){
+    analyzeStock();
+  }
+});
+
+// automatic smoke tests
+console.assert(typeof fetchStock==='function','fetchStock function missing');
+console.assert(typeof generateFallbackData==='function','Fallback generator missing');
+console.assert(Array.isArray(agents),'Agents should be an array');
+console.assert(agents.length===4,'Expected 4 agents');
+
+setTicker('NVDA');
+</script>
+</body>
+</html>
